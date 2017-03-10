@@ -15,6 +15,9 @@ from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from .models import ForeignKeySource
+
+
 factory = APIRequestFactory()
 
 
@@ -412,3 +415,23 @@ class Test4605Regression(TestCase):
             '/auth/convert-token/'
         ])
         assert prefix == '/'
+
+
+class ForeignKeySourceExampleViewSet(ExampleViewSet):
+    queryset = ForeignKeySource.objects.all()
+
+
+@unittest.skipUnless(coreapi, 'coreapi is not installed')
+class TestSchemaGeneratorWithTemplatedPathFields(TestCase):
+
+    def test_get_path_fields_for_available_model_and_unavailable_field(self):
+        generator = SchemaGenerator()
+        path_fields = generator.get_path_fields('/{not_target}', 'GET', ForeignKeySourceExampleViewSet)
+        expected = [
+            coreapi.Field(
+                name='not_target',
+                location='path',
+                required=True,
+                schema=coreschema.String(title='', description='')),
+        ]
+        assert path_fields == expected
